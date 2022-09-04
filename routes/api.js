@@ -6,4 +6,8 @@ router.get('/', function(req, res, next) {
   res.json(["Tony","Lisa","Michael","Ginger","Food"]);
 });
 
+router.post('/open-registration-request', function(req, res, next) {
+  res.json(["Tony","Lisa","Michael","Ginger","Food"]);
+});
+
 module.exports = router;
