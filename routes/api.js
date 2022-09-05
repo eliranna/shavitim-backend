@@ -26,17 +26,22 @@ const sendResponseEmail = (info) => {
     text: 'That was easy!'
   };
   
-  transporter.sendMail(mailOptions, function(error, info){
+  return transporter.sendMail(mailOptions, function(error, info) {
     if (error) {
-      console.log(error);
+      return {
+        success: false,
+        error
+      }
     } else {
-      console.log('Email sent: ' + info.response);
+      return {
+        success: true
+      }
     }
-  });
+  })
 
 }
 
-const sendRegistrationEmail = (info, file) => {
+async function sendRegistrationEmail (info, file) {
 
   var transporter = nodemailer.createTransport({
     service: TRANSPORTER,
@@ -68,13 +73,15 @@ const sendRegistrationEmail = (info, file) => {
     ]
   };
   
-  transporter.sendMail(mailOptions, function(error, info){
-    if (error) {
-      console.log(error);
-    } else {
-      console.log('Email sent: ' + info.response);
-    }
-  });
+  return await new Promise((resolve,reject)=>{
+    transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        reject(error)
+      } else {
+        resolve(info)
+      }
+    });
+  })
 }
 
 /* GET users listing. */
@@ -82,13 +89,24 @@ router.get('/', function(req, res, next) {
   res.json(["Tony","Lisa","Michael","Ginger","Food"]);
 });
 
-router.post('/open-registration-request', multer().any(), function(req, res, next) {
-  console.log(req.body.studentFirstName)
-  console.log(req.body.studentLastName)
-  console.log(req.body)
-  console.log(req.files)
-  sendResponseEmail(req.body)
-  sendRegistrationEmail(req.body, req.files[0])
+router.post('/open-registration-request', multer().any(), function(req, res) {
+  //console.log(req.body.studentFirstName)
+  //console.log(req.body.studentLastName)
+  //console.log(req.body)
+  //console.log(req.files)
+
+  sendRegistrationEmail(req.body, req.files[0]).then(() => {
+    res.status(200).json({
+      success: true
+    });
+    sendResponseEmail(req.body);
+  }, error => {
+    res.status(500).json({
+      success: false,
+      error
+    });
+  })
+
 });
 
 module.exports = router;
