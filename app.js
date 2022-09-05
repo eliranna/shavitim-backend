@@ -42,7 +42,3 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
-
-app.get('env') === 'development' && app.listen(process.env.PORT || 9090, () => {
-  console.log(`App is running on port 9090`);
-});
