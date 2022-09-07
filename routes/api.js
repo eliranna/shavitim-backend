@@ -117,7 +117,6 @@ router.post('/open-registration-request', multer().any(), function(req, res) {
       success: true
     });
     sendResponseEmail(req.body);
-    sendApprovalEmail(req.body);
     setTimeout(() => {
       sendApprovalEmail(req.body);
     }, 86400000)
