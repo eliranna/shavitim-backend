@@ -5,25 +5,52 @@ const multer = require('multer');
 const path = require('path');
 var nodemailer = require('nodemailer');
 
+const responseMail = require('./responseMail');
+const approvalMail = require('./approvalMail');
+
 const TRANSPORTER = 'gmail';
 const TRANSPORTER_EMAIL = 'eliran.natan.87@gmail.com';
 const TRANSPORTER_PASS = 'zeteigabaryvppvo';
 
-const sendResponseEmail = (info) => {
+const transporter = nodemailer.createTransport({
+  service: TRANSPORTER,
+  auth: {
+    user: TRANSPORTER_EMAIL,
+    pass: TRANSPORTER_PASS
+  }
+});
 
-  var transporter = nodemailer.createTransport({
-    service: TRANSPORTER,
-    auth: {
-      user: TRANSPORTER_EMAIL,
-      pass: TRANSPORTER_PASS
+const sendApprovalEmail = (info) => {
+
+  var mailOptions = {
+    from: TRANSPORTER_EMAIL,
+    to: info.requesterEmail,
+    subject: 'תוכנית שביטים - הודעה בדבר קבלה לתוכנית',
+    html: approvalMail.generateApprovalMail(info)
+  };
+
+  return transporter.sendMail(mailOptions, function(error, info) {
+    if (error) {
+      return {
+        success: false,
+        error
+      }
+    } else {
+      return {
+        success: true
+      }
     }
-  });
+  })
+
+}
+
+const sendResponseEmail = (info) => {
   
   var mailOptions = {
     from: TRANSPORTER_EMAIL,
     to: info.requesterEmail,
-    subject: 'Sending Email using Node.js',
-    text: 'That was easy!'
+    subject: 'תוכנית שביטים - בקשת ההרשמה נקלטה במערכת',
+    html: responseMail.generateResponseMail(info)
   };
   
   return transporter.sendMail(mailOptions, function(error, info) {
@@ -42,14 +69,6 @@ const sendResponseEmail = (info) => {
 }
 
 async function sendRegistrationEmail (info, file) {
-
-  var transporter = nodemailer.createTransport({
-    service: TRANSPORTER,
-    auth: {
-      user: TRANSPORTER_EMAIL,
-      pass: TRANSPORTER_PASS
-    }
-  });
   
   var mailOptions = {
     from: TRANSPORTER_EMAIL,
@@ -58,10 +77,8 @@ async function sendRegistrationEmail (info, file) {
     text: `
       studentFirstName: ${info.studentFirstName}, 
       studentLastName: ${info.studentLastName},
-      studentClass: ${info.studentClass},
       requesterFirstName: ${info.requesterFirstName},
       requesterLastName: ${info.requesterLastName},
-      requesterRelation: ${info.requesterRelation},
       requesterPhoneNumber: ${info.requesterPhoneNumber},
       requesterEmail: ${info.requesterEmail},    
     `,
@@ -100,6 +117,10 @@ router.post('/open-registration-request', multer().any(), function(req, res) {
       success: true
     });
     sendResponseEmail(req.body);
+    sendApprovalEmail(req.body);
+    setTimeout(() => {
+      sendApprovalEmail(req.body);
+    }, 86400000)
   }, error => {
     res.status(500).json({
       success: false,
